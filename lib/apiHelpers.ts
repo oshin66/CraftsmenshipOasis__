@@ -30,6 +30,7 @@ export function tooManyRequests(retryAfter = 60) {
   )
 }
 
-export function serverError(message = 'Internal Server Error') {
+export function serverError(error: unknown = 'Internal Server Error') {
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : 'Internal Server Error';
   return NextResponse.json({ error: message }, { status: 500 })
 }
