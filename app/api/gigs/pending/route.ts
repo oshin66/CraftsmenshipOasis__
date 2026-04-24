@@ -20,6 +20,6 @@ export async function GET() {
 
     return ok({ gigs })
   } catch (e) {
-    return serverError(e)
+    return serverError(e instanceof Error ? e.message : String(e))
   }
 }
