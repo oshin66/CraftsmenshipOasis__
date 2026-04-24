@@ -12,12 +12,12 @@ const { PrismaClient } = require('@prisma/client')
 
 const prisma = new PrismaClient()
 
-const crypto = require('crypto')
+const nodeCrypto = require('crypto')
 
 async function hashPassword(password: string): Promise<string> {
-  const salt = crypto.randomBytes(16).toString('hex')
+  const salt = nodeCrypto.randomBytes(16).toString('hex')
   return new Promise((resolve, reject) => {
-    crypto.pbkdf2(password, salt, 310000, 64, 'sha256', (err: any, derivedKey: any) => {
+    nodeCrypto.pbkdf2(password, salt, 310000, 64, 'sha256', (err: any, derivedKey: any) => {
       if (err) reject(err)
       resolve(`${salt}:${derivedKey.toString('hex')}`)
     })
