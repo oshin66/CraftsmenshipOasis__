@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedPrep Pro — Virtual Patient Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --teal: #0A8F72;
+  --teal-light: #E6F7F3;
+  --teal-mid: #B2E4D8;
+  --teal-dark: #07705A;
+  --blue: #1565C0;
+  --blue-light: #E3F2FD;
+  --blue-mid: #BBDEFB;
+  --slate: #2C3E50;
+  --slate-mid: #5A6F82;
+  --slate-light: #8FA3B3;
+  --bg: #F5F8FA;
+  --bg2: #EEF3F7;
+  --white: #FFFFFF;
+  --border: #DDE6ED;
+  --border-dark: #C5D4DF;
+  --text: #1A2733;
+  --text-mid: #4A5E6D;
+  --text-light: #7A909F;
+  --amber: #E65100;
+  --amber-bg: #FFF3E0;
+  --green: #2E7D32;
+  --green-bg: #E8F5E9;
+  --red: #B71C1C;
+  --red-bg: #FFEBEE;
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.10);
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ─── DISCLAIMER ─── */
+.disclaimer-bar {
+  background: #FFF8E1;
+  border-bottom: 1px solid #FFE082;
+  padding: 8px 24px;
+  text-align: center;
+  font-size: 12px;
+  color: #7B5E00;
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+.disclaimer-bar span { font-weight: 400; }
+
+/* ─── HEADER ─── */
+header {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 33px;
+  z-index: 100;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-mark {
+  width: 36px; height: 36px;
+  background: var(--teal);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-mark svg { width: 20px; height: 20px; fill: white; }
+.logo-text { font-size: 17px; font-weight: 600; color: var(--text); }
+.logo-text span { color: var(--teal); }
+.nav-tabs {
+  display: flex; gap: 2px;
+  background: var(--bg); padding: 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.nav-tab {
+  padding: 6px 18px;
+  border-radius: 6px;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; color: var(--text-mid);
+  transition: all 0.2s; border: none; background: none;
+}
+.nav-tab.active { background: var(--white); color: var(--teal); box-shadow: var(--shadow-sm); }
+.sim-label {
+  background: #FFF3E0;
+  color: #E65100;
+  border: 1px solid #FFCC80;
+  font-size: 12px; font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+  animation: pulse-border 2.5s ease-in-out infinite;
+}
+@keyframes pulse-border {
+  0%,100% { box-shadow: 0 0 0 0 rgba(230,81,0,0.15); }
+  50% { box-shadow: 0 0 0 4px rgba(230,81,0,0.08); }
+}
+
+/* ─── LAYOUT ─── */
+.app-shell {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  height: calc(100vh - 97px);
+  overflow: hidden;
+}
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-header {
+  padding: 20px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0;
+  background: var(--white);
+  z-index: 10;
+}
+.sidebar-header h2 {
+  font-size: 13px; font-weight: 600;
+  color: var(--text-light);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+.difficulty-row {
+  display: flex; gap: 6px;
+}
+.diff-btn {
+  flex: 1; padding: 6px 4px;
+  border: 1px solid var(--border); border-radius: 6px;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  background: var(--bg); color: var(--text-mid);
+  transition: all 0.18s;
+}
+.diff-btn.active { background: var(--teal-light); border-color: var(--teal-mid); color: var(--teal-dark); }
+
+.case-list { padding: 12px; flex: 1; }
+.case-section-label {
+  font-size: 11px; font-weight: 600; color: var(--text-light);
+  text-transform: uppercase; letter-spacing: 0.07em;
+  padding: 8px 8px 6px;
+}
+.case-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.case-card:hover { border-color: var(--teal-mid); background: var(--teal-light); }
+.case-card.active {
+  border-color: var(--teal);
+  background: var(--teal-light);
+  box-shadow: 0 0 0 2px rgba(10,143,114,0.12);
+}
+.case-card.locked { opacity: 0.5; cursor: not-allowed; }
+.case-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.case-meta { font-size: 11px; color: var(--text-light); }
+.case-tags { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+.case-tag {
+  font-size: 10px; font-weight: 500;
+  padding: 2px 7px; border-radius: 20px;
+  background: var(--white); border: 1px solid var(--border);
+  color: var(--text-mid);
+}
+.case-status {
+  position: absolute; top: 10px; right: 10px;
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.status-done { background: var(--green); }
+.status-new { background: var(--teal); }
+.status-locked { background: var(--text-light); }
+.diff-easy { border-left: 3px solid var(--green); }
+.diff-medium { border-left: 3px solid var(--amber); }
+.diff-hard { border-left: 3px solid var(--red); }
+
+/* ─── MAIN PANEL ─── */
+.main-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ─── CASE INTRO ─── */
+#caseIntro {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+.intro-content { max-width: 520px; text-align: center; }
+.intro-icon {
+  width: 72px; height: 72px;
+  background: var(--teal-light);
+  border: 2px solid var(--teal-mid);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+}
+.intro-content h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 26px; font-weight: 400;
+  color: var(--text); margin-bottom: 8px;
+}
+.intro-content p { color: var(--text-mid); font-size: 14px; margin-bottom: 24px; }
+.select-prompt {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  text-align: left;
+  margin-bottom: 20px;
+}
+.select-prompt h3 { font-size: 13px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px; }
+.tip-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.tip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); margin-top: 6px; flex-shrink: 0; }
+.tip-row p { font-size: 13px; color: var(--text-mid); }
+
+/* ─── CASE HEADER BAR ─── */
+#caseSession { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+.case-topbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.patient-info { display: flex; align-items: center; gap: 14px; }
+.patient-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 600;
+  flex-shrink: 0;
+  border: 2px solid;
+}
+.avatar-m { background: #E3F2FD; color: #1565C0; border-color: #90CAF9; }
+.avatar-f { background: #FCE4EC; color: #AD1457; border-color: #F48FB1; }
+.patient-details h3 { font-size: 15px; font-weight: 600; color: var(--text); }
+.patient-details p { font-size: 12px; color: var(--text-light); }
+.case-actions { display: flex; align-items: center; gap: 10px; }
+.score-display {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  font-size: 13px; font-weight: 500;
+  color: var(--text-mid);
+}
+.score-display span { color: var(--teal); font-weight: 600; }
+.end-btn {
+  background: none;
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  padding: 7px 14px;
+  font-size: 13px; font-weight: 500;
+  color: var(--text-mid);
+  cursor: pointer;
+  transition: all 0.18s;
+  font-family: 'DM Sans', sans-serif;
+}
+.end-btn:hover { background: var(--red-bg); border-color: #FFCDD2; color: var(--red); }
+
+/* ─── PROGRESS STEPS ─── */
+.progress-bar-wrap {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+.step-item {
+  display: flex; align-items: center; gap: 6px;
+  white-space: nowrap;
+}
+.step-dot {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600;
+  border: 1.5px solid var(--border-dark);
+  color: var(--text-light);
+  background: var(--white);
+  transition: all 0.2s;
+}
+.step-dot.done { background: var(--teal); border-color: var(--teal); color: white; }
+.step-dot.active { border-color: var(--teal); color: var(--teal); background: var(--teal-light); }
+.step-label { font-size: 11px; color: var(--text-light); font-weight: 500; }
+.step-label.active { color: var(--teal); font-weight: 600; }
+.step-label.done { color: var(--text-mid); }
+.step-line { width: 24px; height: 1.5px; background: var(--border); flex-shrink: 0; }
+.step-line.done { background: var(--teal); }
+
+/* ─── CHAT AREA ─── */
+.chat-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ─── SIMULATION WATERMARK ─── */
+.sim-watermark {
+  text-align: center;
+  padding: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(230,81,0,0.35);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  pointer-events: none;
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  background: var(--white);
+}
+
+/* ─── MESSAGES ─── */
+.msg { display: flex; gap: 10px; animation: msgIn 0.3s ease both; }
+@keyframes msgIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.msg.student { flex-direction: row-reverse; }
+.msg-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600;
+  flex-shrink: 0; align-self: flex-end;
+}
+.patient-av { background: #E3F2FD; color: #1565C0; border: 1.5px solid #90CAF9; }
+.student-av { background: var(--teal-light); color: var(--teal-dark); border: 1.5px solid var(--teal-mid); }
+.msg-bubble {
+  max-width: 72%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.patient-bubble {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+.student-bubble {
+  background: var(--teal);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+.msg-time { font-size: 10px; color: var(--text-light); margin-top: 4px; text-align: right; }
+.patient .msg-time { text-align: left; }
+.system-msg {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-light);
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  align-self: center;
+}
+.typing-indicator {
+  display: flex; gap: 4px; align-items: center;
+  padding: 12px 16px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  border-bottom-left-radius: 4px;
+  max-width: 80px;
+  box-shadow: var(--shadow-sm);
+}
+.typing-indicator span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-light);
+  animation: bounce 1.2s ease-in-out infinite;
+}
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+
+/* ─── HINT CHIPS ─── */
+.hint-chips {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 0 24px 12px;
+  flex-shrink: 0;
+}
+.hint-chip {
+  padding: 6px 14px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+  color: var(--text-mid);
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.hint-chip:hover { background: var(--teal-light); border-color: var(--teal-mid); color: var(--teal-dark); }
+
+/* ─── INPUT BAR ─── */
+.input-bar {
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+.input-bar textarea {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  resize: none;
+  outline: none;
+  min-height: 42px;
+  max-height: 120px;
+  transition: border-color 0.2s, background 0.2s;
+  line-height: 1.5;
+}
+.input-bar textarea:focus { border-color: var(--teal); background: var(--white); }
+.input-bar textarea::placeholder { color: var(--text-light); }
+.send-btn {
+  width: 42px; height: 42px;
+  background: var(--teal);
+  border: none; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.send-btn:hover { background: var(--teal-dark); transform: scale(1.04); }
+.send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.send-btn svg { width: 18px; height: 18px; stroke: white; }
+
+/* ─── FEEDBACK PANEL ─── */
+#feedbackPanel {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+.feedback-hero {
+  text-align: center;
+  padding: 24px 0 28px;
+}
+.score-circle {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+  border: 4px solid;
+}
+.score-circle.excellent { border-color: var(--green); background: var(--green-bg); }
+.score-circle.good { border-color: var(--teal); background: var(--teal-light); }
+.score-circle.fair { border-color: var(--amber); background: var(--amber-bg); }
+.score-circle.poor { border-color: var(--red); background: var(--red-bg); }
+.score-num { font-size: 28px; font-weight: 700; }
+.score-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; }
+.feedback-hero h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px; margin-bottom: 6px;
+}
+.feedback-hero p { font-size: 14px; color: var(--text-mid); }
+.feedback-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.feedback-block {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+.fb-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-light); margin-bottom: 8px; }
+.fb-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+.fb-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+.fb-dot.good { background: var(--green); }
+.fb-dot.miss { background: var(--red); }
+.fb-item p { font-size: 13px; color: var(--text-mid); line-height: 1.5; }
+.diagnosis-reveal {
+  background: var(--teal-light);
+  border: 1px solid var(--teal-mid);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin-bottom: 14px;
+}
+.diag-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--teal-dark); margin-bottom: 6px; }
+.diag-name { font-size: 18px; font-weight: 600; color: var(--teal-dark); margin-bottom: 4px; }
+.diag-desc { font-size: 13px; color: var(--text-mid); }
+.retry-bar { display: flex; gap: 10px; margin-top: 20px; }
+.retry-btn {
+  flex: 1; padding: 12px;
+  border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1.5px solid var(--teal);
+}
+.retry-btn.primary { background: var(--teal); color: white; border-color: var(--teal); }
+.retry-btn.primary:hover { background: var(--teal-dark); }
+.retry-btn.secondary { background: var(--white); color: var(--teal); }
+.retry-btn.secondary:hover { background: var(--teal-light); }
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 3px; }
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:768px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  header { padding: 0 16px; }
+  .nav-tabs { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Disclaimer — always visible, sticky -->
+<div class="disclaimer-bar">
+  SIMULATION — All patients are fictional. This tool is for MBBS training only — not for clinical use.
+  <span> No real patient data. Reviewed for educational accuracy.</span>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M12 2L3 7v10l9 5 9-5V7L12 2zm0 2.18L19 8.09v7.82L12 19.82 5 15.91V8.09L12 4.18zM12 8a4 4 0 100 8 4 4 0 000-8zm0 2a2 2 0 110 4 2 2 0 010-4z"/></svg>
+    </div>
+    <span class="logo-text">MedPrep <span>Pro</span></span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab" onclick="window.open('medprep_drug_checker.html','_blank')">Drug Checker</button>
+    <button class="nav-tab active">Patient Sim</button>
+    <button class="nav-tab">Reference</button>
+    <button class="nav-tab">Progress</button>
+  </div>
+  <div class="sim-label">SIMULATION MODE</div>
+</header>
+
+<!-- App shell -->
+<div class="app-shell">
+
+  <!-- Sidebar: case selector -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Case Library</h2>
+      <div class="difficulty-row">
+        <button class="diff-btn active" onclick="filterDiff('all',this)">All</button>
+        <button class="diff-btn" onclick="filterDiff('easy',this)">Easy</button>
+        <button class="diff-btn" onclick="filterDiff('medium',this)">Medium</button>
+        <button class="diff-btn" onclick="filterDiff('hard',this)">Hard</button>
+      </div>
+    </div>
+    <div class="case-list" id="caseList"></div>
+  </aside>
+
+  <!-- Main panel -->
+  <div class="main-panel">
+
+    <!-- Intro screen -->
+    <div id="caseIntro">
+      <div class="intro-content" style="animation:fadeUp 0.5s ease both;">
+        <div class="intro-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0A8F72" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <h1>Virtual Patient Simulator</h1>
+        <p>Practice clinical history-taking, examination, and diagnosis with AI-powered fictional patients. Each case is scored on completeness and clinical reasoning.</p>
+        <div class="select-prompt">
+          <h3>How it works</h3>
+          <div class="tip-row"><div class="tip-dot"></div><p>Select a case from the left panel to begin</p></div>
+          <div class="tip-row"><div class="tip-dot"></div><p>Ask the patient questions as you would in a real OPSE or ward round</p></div>
+          <div class="tip-row"><div class="tip-dot"></div><p>Request examinations and investigations at the right time</p></div>
+          <div class="tip-row"><div class="tip-dot"></div><p>Submit your diagnosis to receive detailed feedback and scoring</p></div>
+          <div class="tip-row"><div class="tip-dot"></div><p>All patients are fictional — no real clinical data is used</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active case session -->
+    <div id="caseSession">
+
+      <!-- Patient info topbar -->
+      <div class="case-topbar">
+        <div class="patient-info">
+          <div class="patient-avatar" id="patientAvatar">?</div>
+          <div class="patient-details">
+            <h3 id="patientName">—</h3>
+            <p id="patientMeta">—</p>
+          </div>
+        </div>
+        <div class="case-actions">
+          <div class="score-display">Score: <span id="liveScore">0</span>/100</div>
+          <button class="end-btn" onclick="endCase()">Submit Diagnosis</button>
+        </div>
+      </div>
+
+      <!-- Progress steps -->
+      <div class="progress-bar-wrap" id="progressBar"></div>
+
+      <!-- Chat messages -->
+      <div class="chat-wrap" id="chatWrap"></div>
+
+      <!-- Feedback panel (shown after submission) -->
+      <div id="feedbackPanel"></div>
+
+      <!-- Quick hint chips -->
+      <div class="hint-chips" id="hintChips"></div>
+
+      <!-- Input -->
+      <div class="input-bar" id="inputBar">
+        <textarea id="msgInput" placeholder="Ask the patient something, request an examination, or order investigations..." rows="1"
+          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Simulation watermark -->
+      <div class="sim-watermark">SIMULATION · FICTIONAL PATIENT · EDUCATIONAL USE ONLY</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CASES = [
+  {
+    id: 'c1', name: 'Ravi Sharma', age: 45, gender: 'M', diff: 'easy',
+    chief: 'chest pain for 2 hours',
+    tags: ['Cardiology', 'Acute'],
+    diagnosis: 'Acute STEMI (ST-elevation Myocardial Infarction)',
+    diagDesc: 'Classic presentation: crushing central chest pain radiating to left arm, sweating, nausea in a middle-aged male with risk factors (HTN, smoker). ECG would show ST elevation in leads II, III, aVF (inferior STEMI).',
+    systemPrompt: `You are Ravi Sharma, a 45-year-old male patient in a hospital emergency department. You are a FICTIONAL SIMULATION patient for MBBS medical student training.
+
+PATIENT PROFILE:
+- Age: 45, Male, Bank manager
+- Chief complaint: Crushing chest pain for 2 hours
+- Character: Anxious, slightly short of breath. Answers questions clearly but is worried.
+
+HISTORY (reveal only when asked):
+- Pain: Central, crushing, 8/10, radiating to left arm and jaw. Came on suddenly at rest.
+- Associated: Sweating profusely, nausea, no vomiting. Mild breathlessness.
+- Past history: Hypertension (on amlodipine, not always compliant), no diabetes, no previous cardiac history
+- Family history: Father died of heart attack at 52
+- Social: Smoker (20/day for 20 years), occasional alcohol, sedentary job
+- Medications: Amlodipine 5mg OD (sometimes forgets)
+- Allergies: None known
+- Review of systems: No cough, no leg swelling, no syncope
+
+EXAMINATION (reveal only when asked to examine):
+- General: Diaphoretic, pale, anxious
+- Vitals: BP 155/95, HR 102 bpm, RR 20, SpO2 95% on air, Temp 37.1°C
+- CVS: Heart sounds normal, no murmur, JVP not elevated
+- RS: Clear to auscultation
+- Abdomen: Soft, non-tender
+
+INVESTIGATIONS (reveal only when asked):
+- ECG: ST elevation in leads II, III, aVF. Reciprocal changes in I, aVL.
+- Troponin I: Elevated at 2.4 ng/mL (normal <0.04)
+- CK-MB: Elevated
+- FBC: Normal
+- CXR: No pulmonary oedema, normal cardiac silhouette
+
+RULES:
+- You are ALWAYS a fictional simulation patient. Never break character unless student says "exit simulation".
+- Only reveal information when directly asked.
+- Respond naturally as a scared patient would — short sentences, emotional.
+- If asked something irrelevant, say you don't understand the medical terms.
+- Never volunteer the diagnosis. Let the student discover it.
+- Keep responses under 80 words unless describing symptoms in detail.`,
+    steps: ['Introduce','History','Examination','Investigations','Diagnosis'],
+    hints: ['Ask about chest pain character', 'Ask about radiation', 'Check risk factors', 'Request ECG', 'Ask about family history'],
+    scoreKeys: ['onset', 'radiation', 'associated symptoms', 'risk factors', 'family history', 'examination', 'ECG', 'troponin', 'diagnosis']
+  },
+  {
+    id: 'c2', name: 'Priya Nair', age: 28, gender: 'F', diff: 'easy',
+    chief: 'fever and dysuria for 3 days',
+    tags: ['Nephrology', 'Infection'],
+    diagnosis: 'Acute Pyelonephritis',
+    diagDesc: 'Young female with UTI symptoms (dysuria, frequency) plus systemic features (fever, rigors, loin pain, CVA tenderness). Urinalysis and urine culture confirm upper urinary tract infection requiring IV antibiotics.',
+    systemPrompt: `You are Priya Nair, a 28-year-old female teacher presenting to a general medicine OPD. You are a FICTIONAL SIMULATION patient for MBBS training.
+
+PATIENT PROFILE:
+- Age: 28, Female, Primary school teacher
+- Chief complaint: Fever and painful urination for 3 days
+- Character: Cooperative, a little embarrassed discussing urinary symptoms. Speaks clearly.
+
+HISTORY (reveal only when asked):
+- Dysuria: Burning pain on urination, frequency (every 30-40 min), urgency, small amounts
+- Fever: 38.9°C at home, rigors/chills yesterday night
+- Loin pain: Right-sided dull ache radiating to right side of abdomen
+- No hematuria visible to patient
+- Nausea: Mild, no vomiting
+- LMP: 2 weeks ago, regular cycles, not pregnant
+- Sexual history (if asked sensitively): In a relationship, monogamous, uses OCP
+- Past history: One episode of UTI 2 years ago, treated with antibiotics
+- No hypertension, no diabetes, no kidney disease
+- Medications: Combined OCP
+- Allergies: Penicillin (rash)
+
+EXAMINATION (when asked):
+- Vitals: Temp 38.8°C, BP 108/72, HR 98, RR 16, SpO2 99%
+- Abdomen: Soft. Right renal angle (CVA) tenderness on percussion — positive. No guarding.
+- Pelvic: Not performed in this setting
+
+INVESTIGATIONS (when asked):
+- Urine dipstick: Nitrites +, Leukocytes +++, Blood +
+- Urine microscopy: WBC casts, >100 WBC/hpf, bacteria seen
+- Urine culture: Pending (E. coli likely)
+- FBC: WBC 14.2 × 10⁹/L (neutrophilia), CRP 78
+- Serum creatinine: Normal
+- Pregnancy test: Negative
+- USS KUB: Mild right renal enlargement, no calculi, no obstruction
+
+RULES:
+- Fictional simulation — never break character.
+- Mention penicillin allergy if asked about allergies — this is clinically important.
+- Be slightly shy about sexual history but answer if asked respectfully.
+- Respond in short sentences like a real patient.`,
+    steps: ['Introduce','History','Examination','Investigations','Diagnosis'],
+    hints: ['Ask about urinary symptoms', 'Check for fever/chills', 'Ask about loin pain', 'Ask about allergies', 'Order urine dipstick'],
+    scoreKeys: ['dysuria', 'frequency', 'fever', 'loin pain', 'CVA tenderness', 'allergy', 'urinalysis', 'FBC', 'diagnosis']
+  },
+  {
+    id: 'c3', name: 'Mohan Patel', age: 62, gender: 'M', diff: 'medium',
+    chief: 'breathlessness on exertion for 6 weeks',
+    tags: ['Respiratory', 'Chronic'],
+    diagnosis: 'COPD Exacerbation with Type 2 Respiratory Failure',
+    diagDesc: 'Long-term smoker with progressive breathlessness, chronic productive cough, barrel chest and wheeze. ABG shows hypercapnia with compensated respiratory acidosis — Type 2 respiratory failure. Spirometry would show obstructive pattern (FEV1/FVC < 0.7).',
+    systemPrompt: `You are Mohan Patel, a 62-year-old retired farmer presenting to a chest OPD. You are a FICTIONAL SIMULATION patient for MBBS training.
+
+PATIENT PROFILE:
+- Age: 62, Male, Retired farmer, lives in rural Maharashtra
+- Chief complaint: Getting more breathless over 6 weeks, worse last 3 days
+- Character: Stoic, minimises symptoms ("it's just old age"), speaks in short sentences due to breathlessness.
+
+HISTORY:
+- Breathlessness: NYHA class III now. Was class II 2 months ago. Worse on climbing stairs, walking >50m.
+- Cough: Chronic productive cough, 20+ years. Yellow-green sputum last 3 days (increased from usual white)
+- Wheeze: Yes, worse at night
+- No chest pain, no haemoptysis
+- Smoking: 40 pack-years, quit 5 years ago
+- Past history: "Asthma" diagnosed 10 years ago (likely COPD misdiagnosed), two hospital admissions in past year for chest
+- Medications: Salbutamol inhaler (uses frequently), no ICS/LABA (not prescribed)
+- Family history: Nothing relevant
+- Allergies: None
+- No ankle swelling (currently), no orthopnea
+
+EXAMINATION:
+- General: Breathless at rest, using accessory muscles, pursed-lip breathing
+- Vitals: RR 26, SpO2 84% on air (88% on 2L O2), BP 138/88, HR 110, Temp 37.6°C
+- Chest: Barrel-shaped, hyperresonant, reduced breath sounds bilaterally, bilateral expiratory wheeze, coarse crepts at right base
+- CVS: No pedal oedema currently, JVP not raised
+
+INVESTIGATIONS:
+- ABG (on air): pH 7.32, PaO2 6.1, PaCO2 7.8, HCO3 28, BE +4 (Type 2 RF, compensated)
+- CXR: Hyperinflated lungs, flattened diaphragm, increased AP diameter, right basal infiltrate
+- FBC: WBC 13.1, Hb 16.8 (polycythaemia), normal platelets
+- Sputum: Purulent, culture pending
+- ECG: Sinus tachycardia, P pulmonale
+
+RULES: Fictional simulation only. Short of breath — answers in short phrases. Tends to downplay severity.`,
+    steps: ['Introduce','History','Examination','Investigations','Diagnosis'],
+    hints: ['Ask about breathlessness onset', 'Smoking history essential', 'Check SpO2 and ABG', 'Examine the chest', 'Look for features of CO2 retention'],
+    scoreKeys: ['breathlessness history', 'sputum change', 'smoking history', 'prior admissions', 'barrel chest', 'wheeze', 'ABG', 'CXR', 'diagnosis']
+  },
+  {
+    id: 'c4', name: 'Anjali Mehta', age: 35, gender: 'F', diff: 'medium',
+    chief: 'joint pains and skin rash for 4 months',
+    tags: ['Rheumatology', 'Autoimmune'],
+    diagnosis: 'Systemic Lupus Erythematosus (SLE)',
+    diagDesc: 'Young woman with malar rash, photosensitivity, polyarthritis, hair loss, oral ulcers and constitutional symptoms. ANA positive, anti-dsDNA elevated, low complement. Meets ≥4 ACR criteria for SLE.',
+    systemPrompt: `You are Anjali Mehta, a 35-year-old software engineer presenting to a rheumatology clinic. You are a FICTIONAL SIMULATION patient for MBBS training.
+
+PATIENT PROFILE:
+- Age: 35, Female, Software engineer. Married with one child.
+- Chief complaint: Joint pains and a facial rash for 4 months
+- Character: Articulate, worried, has been Googling her symptoms.
+
+HISTORY:
+- Rash: Red butterfly-shaped rash across cheeks and nose bridge. Worse after sun exposure. No itching.
+- Joints: Pain and morning stiffness in both hands (MCP, PIP), wrists, knees. Symmetric. Swelling present. Stiffness >1 hour morning.
+- Hair loss: Notices clumps in shower drain for past 2 months
+- Oral ulcers: Recurrent, painless, inside mouth
+- Fatigue: Severe, unable to work full days
+- Fever: Low grade, intermittent
+- No pleuritic chest pain, no Raynaud's, no seizures
+- LMP: Normal, regular
+- Medications: None, occasionally ibuprofen for joint pain
+- Family history: Mother has thyroid disease
+
+EXAMINATION:
+- Malar rash: Erythematous, butterfly distribution, sparing nasolabial folds
+- Diffuse alopecia
+- Oral ulcers: 2 small ulcers on buccal mucosa
+- Joints: Synovitis of bilateral MCPs and wrists. No deformity.
+- No lymphadenopathy, no organomegaly
+
+INVESTIGATIONS:
+- ANA: Positive, titre 1:640, homogeneous pattern
+- Anti-dsDNA: Elevated (450 IU/mL, normal <30)
+- Complement: C3 low (0.56 g/L), C4 low
+- FBC: WBC 3.1 (lymphopenia), Hb 10.2 (normocytic), platelets 110
+- Urinalysis: Protein ++, RBC casts on microscopy
+- CRP: Mildly elevated. ESR: 78
+- RF: Negative. Anti-CCP: Negative.
+
+RULES: Fictional simulation only. She's knowledgeable — responds thoughtfully. Has been scared since Googling "butterfly rash".`,
+    steps: ['Introduce','History','Examination','Investigations','Diagnosis'],
+    hints: ['Ask about the rash in detail', 'Photosensitivity history', 'Check joint symmetry', 'Oral ulcers and hair loss', 'Order ANA and complement'],
+    scoreKeys: ['malar rash', 'photosensitivity', 'arthritis pattern', 'alopecia', 'oral ulcers', 'ANA', 'anti-dsDNA', 'urinalysis', 'diagnosis']
+  },
+  {
+    id: 'c5', name: 'Arjun Desai', age: 19, gender: 'M', diff: 'hard',
+    chief: 'severe headache and neck stiffness since this morning',
+    tags: ['Neurology', 'Emergency'],
+    diagnosis: 'Bacterial Meningitis (Neisseria meningitidis)',
+    diagDesc: 'Young adult with classic triad: severe headache, neck stiffness, and fever. Photophobia, positive Kernig\'s and Brudzinski\'s signs. Non-blanching petechial rash indicates meningococcal septicaemia — a medical emergency. LP shows turbid CSF with neutrophilia.',
+    systemPrompt: `You are Arjun Desai, a 19-year-old engineering student brought to the emergency department by his roommate. You are a FICTIONAL SIMULATION patient for MBBS training.
+
+PATIENT PROFILE:
+- Age: 19, Male, Engineering student in hostel
+- Chief complaint: Severe headache and neck stiffness since this morning
+- Character: Very unwell. Speaks slowly, clearly in pain. Photophobia makes it hard to open eyes in the examination room.
+
+HISTORY:
+- Headache: Worst of life. 10/10. Sudden onset this morning. Global, throbbing.
+- Neck stiffness: Cannot touch chin to chest. Painful to try.
+- Fever: 39.8°C. Rigors.
+- Photophobia: Severe — cannot tolerate the room lights
+- Phonophobia: Yes, sounds hurt
+- Vomiting: 3 episodes, not relieved headache
+- Rash: Roommate noticed small spots on chest and arms (if asked) — non-blanching
+- No recent trauma, no previous similar episodes
+- Hostel: New hostel 3 months ago, several students with "viral illness" recently
+- Medications: None
+- Allergies: None
+- No seizure, no loss of consciousness, no focal neurology
+
+EXAMINATION:
+- Severely unwell, photophobic, prefers dark
+- Vitals: Temp 39.9°C, BP 95/60 (septic), HR 126, RR 24, SpO2 97%
+- Neck: Marked neck rigidity. Kernig's sign positive. Brudzinski's sign positive.
+- Skin: Non-blanching petechial/purpuric rash on trunk and limbs
+- Neuro: GCS 13 (E3V4M6), no focal deficit, pupils equal and reactive
+- Fundi: Papilloedema absent
+
+INVESTIGATIONS:
+- FBC: WBC 22.4 (neutrophilia), CRP 240, PCT elevated
+- Blood cultures: Taken (2 sets)
+- CT head: No space-occupying lesion, no midline shift (safe to LP)
+- CSF (LP): Turbid. Opening pressure 28 cmH2O. WBC 2800 (90% neutrophils). Protein 3.2 g/L. Glucose 1.2 (blood glucose 6.8) — ratio <0.3. Gram stain: Gram-negative diplococci.
+- Meningococcal PCR: Pending
+
+RULES: Fictional simulation — emergency scenario. Patient is unwell. Keep answers short and pained. If student does not ask about rash, do not volunteer it proactively (they must spot it on examination). This is a time-sensitive scenario.`,
+    steps: ['Introduce','History','Examination','Investigations','Diagnosis'],
+    hints: ['Ask about headache onset and severity', 'Check for photophobia', 'Examine for neck stiffness', 'Look for rash — non-blanching?', 'Kernig and Brudzinski signs'],
+    scoreKeys: ['headache character', 'neck stiffness', 'photophobia', 'fever rigors', 'rash identified', 'meningeal signs', 'CSF results', 'blood cultures', 'diagnosis']
+  }
+];
+
+let currentCase = null;
+let chatHistory = [];
+let currentStep = 0;
+let liveScore = 0;
+let mentionedKeys = new Set();
+let isLoading = false;
+let sessionEnded = false;
+
+function getTime() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderCaseList(filter = 'all') {
+  const list = document.getElementById('caseList');
+  list.innerHTML = '';
+  CASES.forEach(c => {
+    if (filter !== 'all' && c.diff !== filter) return;
+    const card = document.createElement('div');
+    card.className = `case-card diff-${c.diff} ${currentCase?.id === c.id ? 'active' : ''}`;
+    card.onclick = () => startCase(c);
+    card.innerHTML = `
+      <div class="case-status status-new"></div>
+      <div class="case-name">${c.name}</div>
+      <div class="case-meta">${c.age}y · ${c.gender === 'M' ? 'Male' : 'Female'} · ${c.chief}</div>
+      <div class="case-tags">
+        ${c.tags.map(t => `<span class="case-tag">${t}</span>`).join('')}
+        <span class="case-tag" style="background:${c.diff==='easy'?'#E8F5E9':c.diff==='medium'?'#FFF3E0':'#FFEBEE'};border-color:${c.diff==='easy'?'#A5D6A7':c.diff==='medium'?'#FFCC80':'#FFCDD2'};color:${c.diff==='easy'?'#2E7D32':c.diff==='medium'?'#E65100':'#B71C1C'}">${c.diff.charAt(0).toUpperCase()+c.diff.slice(1)}</span>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function filterDiff(diff, btn) {
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCaseList(diff);
+}
+
+function startCase(c) {
+  currentCase = c;
+  chatHistory = [];
+  currentStep = 0;
+  liveScore = 0;
+  mentionedKeys = new Set();
+  sessionEnded = false;
+  renderCaseList();
+
+  document.getElementById('caseIntro').style.display = 'none';
+  document.getElementById('feedbackPanel').style.display = 'none';
+  document.getElementById('caseSession').style.display = 'flex';
+  document.getElementById('inputBar').style.display = 'flex';
+  document.getElementById('hintChips').style.display = 'flex';
+
+  const av = document.getElementById('patientAvatar');
+  av.textContent = c.name.split(' ').map(n=>n[0]).join('');
+  av.className = `patient-avatar ${c.gender === 'M' ? 'avatar-m' : 'avatar-f'}`;
+  document.getElementById('patientName').textContent = c.name;
+  document.getElementById('patientMeta').textContent = `${c.age} years · ${c.gender === 'M' ? 'Male' : 'Female'} · ${c.tags.join(', ')}`;
+  document.getElementById('liveScore').textContent = '0';
+
+  renderProgressBar();
+  renderHints();
+
+  const chat = document.getElementById('chatWrap');
+  chat.innerHTML = '';
+
+  appendSystemMsg('Simulation started — fictional patient. All interactions are for educational training only.');
+  appendPatientMsg(`Hello doctor. ${c.gender === 'F' ? "I'm not feeling well..." : "I've been feeling very unwell..."}`, true);
+  document.getElementById('msgInput').focus();
+}
+
+function renderProgressBar() {
+  if (!currentCase) return;
+  const bar = document.getElementById('progressBar');
+  bar.innerHTML = currentCase.steps.map((s, i) => `
+    <div class="step-item">
+      ${i > 0 ? `<div class="step-line ${i <= currentStep ? 'done' : ''}"></div>` : ''}
+      <div class="step-dot ${i < currentStep ? 'done' : i === currentStep ? 'active' : ''}">
+        ${i < currentStep ? '✓' : i+1}
+      </div>
+      <span class="step-label ${i < currentStep ? 'done' : i === currentStep ? 'active' : ''}">${s}</span>
+    </div>`).join('');
+}
+
+function renderHints() {
+  if (!currentCase) return;
+  const chips = document.getElementById('hintChips');
+  const stepHints = currentCase.hints.slice(currentStep * 1, currentStep * 1 + 3);
+  chips.innerHTML = stepHints.map(h =>
+    `<button class="hint-chip" onclick="useHint('${h}')">${h}</button>`).join('');
+}
+
+function useHint(h) {
+  document.getElementById('msgInput').value = h;
+  document.getElementById('msgInput').focus();
+}
+
+function appendSystemMsg(text) {
+  const chat = document.getElementById('chatWrap');
+  const el = document.createElement('div');
+  el.className = 'system-msg';
+  el.textContent = text;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function appendPatientMsg(text, instant = false) {
+  const chat = document.getElementById('chatWrap');
+  if (!instant) {
+    const typing = document.createElement('div');
+    typing.className = 'msg';
+    typing.id = 'typingIndicator';
+    typing.innerHTML = `
+      <div class="msg-avatar patient-av">${currentCase.name.split(' ').map(n=>n[0]).join('')}</div>
+      <div class="typing-indicator"><span></span><span></span><span></span></div>`;
+    chat.appendChild(typing);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  const delay = instant ? 0 : 600 + text.length * 18;
+  setTimeout(() => {
+    const old = document.getElementById('typingIndicator');
+    if (old) old.remove();
+    const el = document.createElement('div');
+    el.className = 'msg';
+    el.innerHTML = `
+      <div class="msg-avatar patient-av">${currentCase.name.split(' ').map(n=>n[0]).join('')}</div>
+      <div>
+        <div class="msg-bubble patient-bubble">${text}</div>
+        <div class="msg-time">${getTime()}</div>
+      </div>`;
+    chat.appendChild(el);
+    chat.scrollTop = chat.scrollHeight;
+    isLoading = false;
+    document.getElementById('sendBtn').disabled = false;
+  }, delay);
+}
+
+function appendStudentMsg(text) {
+  const chat = document.getElementById('chatWrap');
+  const el = document.createElement('div');
+  el.className = 'msg student';
+  el.innerHTML = `
+    <div class="msg-avatar student-av">DR</div>
+    <div>
+      <div class="msg-bubble student-bubble">${text}</div>
+      <div class="msg-time" style="text-align:right">${getTime()}</div>
+    </div>`;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function sendMessage() {
+  if (isLoading || sessionEnded) return;
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  appendStudentMsg(text);
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  checkScoreKeys(text);
+  advanceStep(text);
+
+  chatHistory.push({ role: 'user', content: text });
+
+  try {
+    const messages = [
+      { role: 'user', content: currentCase.systemPrompt + '\n\nThe medical student\'s first message is: ' + chatHistory[0].content }
+    ];
+    for (let i = 1; i < chatHistory.length; i++) {
+      messages.push(chatHistory[i]);
+    }
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: currentCase.systemPrompt,
+        messages: chatHistory.map(m => ({ role: m.role, content: m.content }))
+      })
+    });
+
+    const data = await resp.json();
+    const reply = data.content?.[0]?.text || "I'm sorry, I didn't understand that.";
+    chatHistory.push({ role: 'assistant', content: reply });
+    appendPatientMsg(reply);
+    renderHints();
+  } catch(e) {
+    const fallback = getFallbackResponse(text);
+    chatHistory.push({ role: 'assistant', content: fallback });
+    appendPatientMsg(fallback);
+  }
+}
+
+function getFallbackResponse(text) {
+  const t = text.toLowerCase();
+  const c = currentCase;
+  if (!c) return "Could you repeat that?";
+
+  if (t.includes('chest pain') || t.includes('pain')) {
+    if (c.id === 'c1') return "It's crushing, doctor. Really bad — maybe 8 out of 10. It's in the middle of my chest and going into my left arm. Started about 2 hours ago out of nowhere.";
+    if (c.id === 'c2') return "No chest pain, but my lower back — right side — is quite achy.";
+    return "Yes, I have pain. Can you be more specific about which area?";
+  }
+  if (t.includes('fever') || t.includes('temperature')) {
+    if (c.id === 'c2') return "Yes doctor, I've had fever since yesterday. Chills too last night. I measured — it was 38.9 at home.";
+    if (c.id === 'c5') return "Yes, burning up... head is pounding so much I can barely speak.";
+    return "Yes, I've had some fever.";
+  }
+  if (t.includes('urine') || t.includes('dysuria') || t.includes('urination') || t.includes('burn')) {
+    if (c.id === 'c2') return "Yes, it burns terribly when I pass urine. And I feel like going every 20-30 minutes but barely anything comes out. It's very embarrassing.";
+    return "I haven't noticed any urine problems.";
+  }
+  if (t.includes('headache') || t.includes('head')) {
+    if (c.id === 'c5') return "Worst headache of my life, doctor. Please — the light is killing me. It came on suddenly this morning.";
+    return "I have had some mild headache.";
+  }
+  if (t.includes('rash') || t.includes('skin') || t.includes('spots')) {
+    if (c.id === 'c4') return "Yes, this red rash across my cheeks — I get it especially after being in the sun. My friends thought it was sunburn but it keeps coming back.";
+    if (c.id === 'c5') return "My roommate mentioned some spots on my chest when I was dressing... I hadn't noticed.";
+    return "I haven't noticed anything on my skin.";
+  }
+  if (t.includes('smoke') || t.includes('cigarette') || t.includes('tobacco')) {
+    if (c.id === 'c3') return "I smoked for 40 years. Gave up 5 years back. I know, I know — should've stopped sooner.";
+    return "No, I don't smoke.";
+  }
+  if (t.includes('ecg') || t.includes('electrocardiogram') || t.includes('heart tracing')) {
+    if (c.id === 'c1') return "I don't know what that shows doctor, I'm not a medical person. Can you tell me what's happening?";
+    return "I'll let you request that, doctor.";
+  }
+  if (t.includes('allerg')) {
+    if (c.id === 'c2') return "Yes — penicillin. I got a bad rash once from it years ago. Very important, I was told.";
+    return "No known allergies.";
+  }
+  if (t.includes('medication') || t.includes('medicine') || t.includes('tablet') || t.includes('drug')) {
+    if (c.id === 'c1') return "I'm on amlodipine for blood pressure — 5mg. I forget to take it sometimes to be honest.";
+    if (c.id === 'c2') return "Just the contraceptive pill. And sometimes ibuprofen for period pain.";
+    return "No regular medications.";
+  }
+  if (t.includes('family history') || t.includes('father') || t.includes('mother') || t.includes('parents')) {
+    if (c.id === 'c1') return "My father had a heart attack at 52. That's what scares me, doctor.";
+    if (c.id === 'c4') return "My mother has thyroid problems. Nothing else I know of.";
+    return "Nothing significant in the family.";
+  }
+  if (t.includes('breath') || t.includes('shortness')) {
+    if (c.id === 'c3') return "Yes, it's been getting worse for weeks. I can barely walk to the bathroom without stopping now. Last 3 days much worse.";
+    if (c.id === 'c1') return "A little breathless. Mostly the chest pain is the problem.";
+    return "Some mild breathlessness, yes.";
+  }
+  if (t.includes('joint') || t.includes('arthritis') || t.includes('swelling')) {
+    if (c.id === 'c4') return "Both hands and wrists, mainly. Very stiff in the morning — takes over an hour before I feel normal. Some swelling in the knuckles.";
+    return "No joint problems.";
+  }
+  if (t.includes('neck') || t.includes('stiff')) {
+    if (c.id === 'c5') return "I can barely move it, doctor. Even trying hurts terribly. Please don't make me move it.";
+    return "No neck stiffness.";
+  }
+  if (t.includes('examine') || t.includes('look at') || t.includes('check')) {
+    return "Please go ahead, doctor. I'll try to cooperate.";
+  }
+  if (t.includes('blood test') || t.includes('fbc') || t.includes('cbc') || t.includes('bloods')) {
+    return "I can have those done, doctor. What do you need?";
+  }
+  if (t.includes('x-ray') || t.includes('xray') || t.includes('chest x')) {
+    return "Of course, if you think that's needed.";
+  }
+  if (t.includes('diagnosis') || t.includes('what do i have') || t.includes('what is wrong')) {
+    return "That's what I was hoping you could tell me, doctor. I'm quite worried.";
+  }
+  return "Could you explain what you mean, doctor? I'm not always sure about medical terms.";
+}
+
+function checkScoreKeys(text) {
+  if (!currentCase) return;
+  const t = text.toLowerCase();
+  currentCase.scoreKeys.forEach(key => {
+    if (!mentionedKeys.has(key)) {
+      const words = key.toLowerCase().split(' ');
+      if (words.some(w => t.includes(w))) {
+        mentionedKeys.add(key);
+        liveScore = Math.min(100, Math.round((mentionedKeys.size / currentCase.scoreKeys.length) * 85));
+        document.getElementById('liveScore').textContent = liveScore;
+      }
+    }
+  });
+}
+
+function advanceStep(text) {
+  if (!currentCase || currentStep >= currentCase.steps.length - 1) return;
+  const t = text.toLowerCase();
+  const stepKeywords = [
+    [],
+    ['pain', 'fever', 'cough', 'symptom', 'history', 'when', 'how long', 'start'],
+    ['examine', 'look', 'check', 'feel', 'listen', 'auscultate', 'percuss'],
+    ['blood', 'test', 'ecg', 'xray', 'x-ray', 'urine', 'scan', 'investigate', 'cbp', 'fbc', 'culture', 'abg'],
+    ['diagnosis', 'think', 'condition', 'impression', 'differential']
+  ];
+  if (stepKeywords[currentStep + 1]?.some(k => t.includes(k))) {
+    currentStep = Math.min(currentStep + 1, currentCase.steps.length - 1);
+    renderProgressBar();
+    renderHints();
+  }
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function endCase() {
+  if (!currentCase) return;
+  sessionEnded = true;
+
+  const diagInput = prompt(`Before scoring, what is your diagnosis for ${currentCase.name}?\n\n(Type your answer — this will be compared to the correct answer)`, '');
+  if (diagInput && diagInput.trim()) {
+    const d = diagInput.toLowerCase();
+    const correct = currentCase.diagnosis.toLowerCase();
+    const keyTerms = correct.split(/\s+/).filter(w => w.length > 4);
+    const matched = keyTerms.filter(k => d.includes(k));
+    if (matched.length >= 2) liveScore = Math.min(100, liveScore + 15);
+  }
+
+  document.getElementById('inputBar').style.display = 'none';
+  document.getElementById('hintChips').style.display = 'none';
+
+  const chatWrap = document.getElementById('chatWrap');
+  chatWrap.style.display = 'none';
+
+  const panel = document.getElementById('feedbackPanel');
+  panel.style.display = 'block';
+
+  const grade = liveScore >= 80 ? 'excellent' : liveScore >= 60 ? 'good' : liveScore >= 40 ? 'fair' : 'poor';
+  const gradeLabel = liveScore >= 80 ? 'Excellent' : liveScore >= 60 ? 'Good' : liveScore >= 40 ? 'Fair' : 'Needs work';
+  const scoreColor = liveScore >= 80 ? '#2E7D32' : liveScore >= 60 ? '#0A8F72' : liveScore >= 40 ? '#E65100' : '#B71C1C';
+
+  const coveredKeys = [...mentionedKeys];
+  const missedKeys = currentCase.scoreKeys.filter(k => !mentionedKeys.has(k));
+
+  panel.innerHTML = `
+    <div class="feedback-hero">
+      <div class="score-circle ${grade}" style="border-color:${scoreColor}">
+        <div class="score-num" style="color:${scoreColor}">${liveScore}</div>
+        <div class="score-label" style="color:${scoreColor}">/ 100</div>
+      </div>
+      <h2>${gradeLabel} — ${currentCase.name}</h2>
+      <p>Here is your performance feedback for this simulation case.</p>
+    </div>
+
+    <div class="diagnosis-reveal">
+      <div class="diag-label">Correct diagnosis</div>
+      <div class="diag-name">${currentCase.diagnosis}</div>
+      <div class="diag-desc">${currentCase.diagDesc}</div>
+    </div>
+
+    <div class="feedback-grid">
+      <div class="feedback-block">
+        <div class="fb-label">What you covered (${coveredKeys.length})</div>
+        ${coveredKeys.length > 0
+          ? coveredKeys.map(k => `<div class="fb-item"><div class="fb-dot good"></div><p>${k.charAt(0).toUpperCase()+k.slice(1)}</p></div>`).join('')
+          : '<p style="font-size:13px;color:var(--text-light)">No key areas recorded yet.</p>'}
+      </div>
+      <div class="feedback-block">
+        <div class="fb-label">What you missed (${missedKeys.length})</div>
+        ${missedKeys.length > 0
+          ? missedKeys.map(k => `<div class="fb-item"><div class="fb-dot miss"></div><p>${k.charAt(0).toUpperCase()+k.slice(1)}</p></div>`).join('')
+          : '<div class="fb-item"><div class="fb-dot good"></div><p>Nothing missed — excellent coverage!</p></div>'}
+      </div>
+    </div>
+
+    <div class="retry-bar">
+      <button class="retry-btn primary" onclick="startCase(currentCase)">Retry this case</button>
+      <button class="retry-btn secondary" onclick="backToList()">Choose another case</button>
+    </div>
+
+    <p style="font-size:11px;color:var(--text-light);text-align:center;margin-top:14px;">
+      This simulation was reviewed for educational accuracy. All patients are fictional. For clinical learning only — not a substitute for supervised clinical training.
+    </p>`;
+}
+
+function backToList() {
+  document.getElementById('caseSession').style.display = 'none';
+  document.getElementById('caseIntro').style.display = 'flex';
+  currentCase = null;
+  renderCaseList();
+}
+
+renderCaseList();
+</script>
+</body>
+</html>

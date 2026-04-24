@@ -1,0 +1,169 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  BUYER
+  SELLER
+  ADMIN
+}
+
+enum GigStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  REJECTED
+  ARCHIVED
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAYMENT_VERIFICATION
+  REQUIREMENTS_PENDING
+  IN_PROGRESS
+  IN_REVIEW
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model User {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  password    String
+  avatar      String?
+  role        Role     @default(BUYER)
+  isSeller    Boolean  @default(false)
+  sellerBio   String?  @db.Text
+  skills      String?
+  paymentQr   String?  @db.LongText
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  sessionVersion Int       @default(1)
+
+  gigs         Gig[]
+  buyerOrders  Order[]  @relation("BuyerOrders")
+  sellerOrders Order[]  @relation("SellerOrders")
+  reviews      Review[]
+}
+
+model Gig {
+  id            String    @id @default(cuid())
+  title         String
+  description   String    @db.Text
+  thumbnail     String?   @db.LongText
+  category      String
+  techStack     String
+  status        GigStatus @default(DRAFT)
+  basicPrice    Int
+  basicDesc     String
+  standardPrice Int
+  standardDesc  String
+  premiumPrice  Int
+  premiumDesc   String
+  deliveryDays  Int       @default(7)
+  totalOrders   Int       @default(0)
+  rating        Float     @default(0)
+  freeDownloadUrl String?   @db.LongText
+  demoUrl         String?   @db.LongText
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  seller   User    @relation(fields: [sellerId], references: [id])
+  sellerId String
+  orders   Order[]
+  reviews  Review[]
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  package      String
+  price        Int
+  status       OrderStatus @default(PENDING_PAYMENT)
+  requirements String?     @db.Text
+  deliveryFile String?     @db.MediumText
+  deadline     DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  gig      Gig     @relation(fields: [gigId],    references: [id])
+  gigId    String
+  buyer    User    @relation("BuyerOrders",  fields: [buyerId],  references: [id])
+  buyerId  String
+  seller   User    @relation("SellerOrders", fields: [sellerId], references: [id])
+  sellerId String
+  payment  Payment?
+  review   Review?
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  amount        Int
+  transactionId String
+  screenshot    String?       @db.MediumText
+  status        PaymentStatus @default(PENDING)
+  verifiedAt    DateTime?
+  createdAt     DateTime      @default(now())
+
+  order   Order  @relation(fields: [orderId], references: [id])
+  orderId String @unique
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int
+  comment   String   @db.Text
+  createdAt DateTime @default(now())
+
+  order    Order  @relation(fields: [orderId],  references: [id])
+  orderId  String @unique
+  gig      Gig    @relation(fields: [gigId],    references: [id])
+  gigId    String
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
+}
+
+model OtpVerification {
+  email     String   @id
+  otp       String
+  expiresAt DateTime
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  email     String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+model PaymentLog {
+  id            String   @id @default(cuid())
+  paymentId     String
+  action        String
+  performedBy   String
+  ipAddress     String?
+  userAgent     String?
+  timestamp     DateTime @default(now())
+
+  @@index([paymentId])
+}
+
